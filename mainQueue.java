@@ -519,21 +519,27 @@ private static void returnEquipmentToInventory(int rentalID) {
         }
     }
 
-    // Manage equipment (staff only)
     private static void manageEquipment() {
     while (true) {
         displayAllEquipment();
         System.out.println("\nEquipment Management");
-        System.out.println("1. Update Equipment Quantity");
-        System.out.println("2. Remove Equipment");
-        System.out.println("3. Back to Staff Menu");
+        System.out.println("1. Add Equipment");          // New option
+        System.out.println("2. Update Equipment Quantity");
+        System.out.println("3. Remove Equipment");
+        System.out.println("4. Back to Staff Menu");
         System.out.print("Enter your choice: ");
         
         int choice = scanner.nextInt();
         scanner.nextLine(); // Consume newline
         
-        if (choice == 3) {
+        if (choice == 4) {
             break;
+        }
+
+        // Handle Add Equipment option
+        if (choice == 1) {
+            addEquipment();
+            continue;
         }
         
         System.out.print("Enter Equipment ID to modify: ");
@@ -566,7 +572,7 @@ private static void returnEquipmentToInventory(int rentalID) {
                 Equipment eq = (Equipment) equipmentQueue.dequeue();
                 if (eq.getEquipmentID() == equipmentID) {
                     found = true;
-                    if (choice == 1) {
+                    if (choice == 2) {  // Updated choice number
                         System.out.print("Enter new quantity: ");
                         int newQuantity = scanner.nextInt();
                         scanner.nextLine(); // Consume newline
@@ -580,7 +586,7 @@ private static void returnEquipmentToInventory(int rentalID) {
                             System.out.println("Invalid quantity. Must be 0 or positive.");
                             tempQueue.enqueue(eq);
                         }
-                    } else if (choice == 2) {
+                    } else if (choice == 3) {  // Updated choice number
                         System.out.print("Are you sure you want to remove this equipment? (Y/N): ");
                         String confirm = scanner.nextLine().toUpperCase();
                         if (!confirm.equals("Y")) {
@@ -618,6 +624,62 @@ private static void returnEquipmentToInventory(int rentalID) {
         } catch (IOException e) {
             System.out.println("Error managing equipment: " + e.getMessage());
         }
+    }
+}
+
+// New method to add equipment
+private static void addEquipment() {
+    try {
+        // Get the highest existing equipment ID
+        int nextId = 1;
+        BufferedReader reader = new BufferedReader(new FileReader(equipmentFilePath));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] data = line.split(";");
+            int id = Integer.parseInt(data[0]);
+            if (id >= nextId) {
+                nextId = id + 1;
+            }
+        }
+        reader.close();
+
+        // Get equipment details from user
+        System.out.println("\nAdd New Equipment");
+        System.out.print("Enter Equipment Name: ");
+        String name = scanner.nextLine();
+        
+        System.out.print("Enter Initial Quantity: ");
+        int quantity = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+        
+        System.out.print("Enter Rental Rate (per day): ");
+        double rentalRate = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline
+
+        // Validate input
+        if (quantity < 0 || rentalRate < 0) {
+            System.out.println("Invalid input. Quantity and rental rate must be positive.");
+            return;
+        }
+
+        // Add new equipment to file
+        BufferedWriter writer = new BufferedWriter(new FileWriter(equipmentFilePath, true));
+        String equipmentData = String.format("%d;%s;%d;%.2f;%b", 
+            nextId, 
+            name, 
+            quantity, 
+            rentalRate, 
+            quantity > 0);
+        writer.write(equipmentData);
+        writer.newLine();
+        writer.close();
+
+        System.out.println("Equipment added successfully with ID: " + nextId);
+    } catch (IOException e) {
+        System.out.println("Error adding equipment: " + e.getMessage());
+    } catch (InputMismatchException e) {
+        System.out.println("Invalid input format. Please enter numeric values for quantity and rental rate.");
+        scanner.nextLine(); // Clear the invalid input
     }
 }
 
